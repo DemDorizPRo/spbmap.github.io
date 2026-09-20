@@ -8,46 +8,98 @@
         body { margin: 0; padding: 0; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
 
-        /* Скрываем надпись Leaflet */
-        .leaflet-control-attribution {
-            display: none !important;
+        .leaflet-control-attribution { display: none !important; }
+
+        /* Панель управления поворотом */
+        .rotate-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.9);
+            padding: 8px;
+            border-radius: 8px;
+            font-family: sans-serif;
+            font-size: 13px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.3);
+            user-select: none;
         }
+        .rotate-panel button {
+            width: 34px; height: 34px;
+            margin: 2px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            background: #fff;
+            border-radius: 6px;
+        }
+        .rotate-panel button:hover { background: #eee; }
+        .rotate-panel .row { display: flex; align-items: center; gap: 6px; }
+        .rotate-panel input[type=range] { width: 140px; }
     </style>
 </head>
 <body>
     <div id="map"></div>
 
+    <div class="rotate-panel">
+        <div class="row">
+            <button id="rot-left"  title="Повернуть влево">⟲</button>
+            <button id="rot-right" title="Повернуть вправо">⟳</button>
+            <button id="rot-reset" title="Сбросить поворот">⭯</button>
+        </div>
+        <div class="row" style="margin-top:6px;">
+            <input type="range" id="rot-slider" min="0" max="360" value="0" step="1">
+            <span id="rot-value">0°</span>
+        </div>
+    </div>
+
     <script src="leaflet.js"></script>
-    <!-- Плагин вращения карты -->
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
 
     <script>
-        // Карта с центром в Санкт-Петербурге
         var map = L.map('map', {
             center: [59.934280, 30.335099],
             zoom: 13,
 
-            // --- Плавное приближение / отдаление ---
-            zoomSnap: 0,          // разрешаем дробные уровни зума (плавно)
-            zoomDelta: 0.5,       // шаг зума кнопками +/- (можно 0.25)
-            wheelPxPerZoomLevel: 120, // чувствительность колеса мыши
-            wheelDebounceTime: 40,    // отзывчивость колеса
+            // Плавный зум
+            zoomSnap: 0,
+            zoomDelta: 0.5,
 
-            // --- Вращение карты ---
-            rotate: true,             // включаем вращение
-            rotateControl: {
-                closeOnZeroBearing: false
-            },
-            bearing: 0,               // начальный угол поворота
-            touchRotate: true,        // вращение двумя пальцами на тачскрине
-            shiftKeyRotate: true,     // вращение с зажатым Shift + перетаскивание
-            rotateWhileZooming: true  // плавное вращение при зуме
+            // Вращение карты
+            rotate: true,
+            bearing: 0,
+            touchRotate: true,
+            shiftKeyRotate: true,     // Shift + перетаскивание мышью
+            rotateControl: false      // свой контрол, стандартный выключим
         });
 
-        // Слой карты - без надписи
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: ''
         }).addTo(map);
+
+        // ---- Управление поворотом ----
+        var slider = document.getElementById('rot-slider');
+        var value  = document.getElementById('rot-value');
+
+        function setBearing(deg) {
+            deg = ((deg % 360) + 360) % 360;
+            map.setBearing(deg);
+            slider.value = deg;
+            value.textContent = Math.round(deg) + '°';
+        }
+
+        document.getElementById('rot-left').onclick  = function(){ setBearing(map.getBearing() - 15); };
+        document.getElementById('rot-right').onclick = function(){ setBearing(map.getBearing() + 15); };
+        document.getElementById('rot-reset').onclick = function(){ setBearing(0); };
+        slider.oninput = function(){ setBearing(parseFloat(this.value)); };
+
+        // Обновляем ползунок, если пользователь крутит карту мышью/пальцем
+        map.on('rotate', function(){
+            var b = map.getBearing();
+            b = ((b % 360) + 360) % 360;
+            slider.value = b;
+            value.textContent = Math.round(b) + '°';
+        });
     </script>
 </body>
 </html>
