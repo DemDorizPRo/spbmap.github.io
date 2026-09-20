@@ -7,7 +7,7 @@
     <style>
         body { margin: 0; padding: 0; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        
+
         /* Скрываем надпись Leaflet */
         .leaflet-control-attribution {
             display: none !important;
@@ -16,18 +16,38 @@
 </head>
 <body>
     <div id="map"></div>
-    
+
     <script src="leaflet.js"></script>
+    <!-- Плагин вращения карты -->
+    <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
+
     <script>
         // Карта с центром в Санкт-Петербурге
-        var map = L.map('map').setView([59.934280, 30.335099], 13);
-        
+        var map = L.map('map', {
+            center: [59.934280, 30.335099],
+            zoom: 13,
+
+            // --- Плавное приближение / отдаление ---
+            zoomSnap: 0,          // разрешаем дробные уровни зума (плавно)
+            zoomDelta: 0.5,       // шаг зума кнопками +/- (можно 0.25)
+            wheelPxPerZoomLevel: 120, // чувствительность колеса мыши
+            wheelDebounceTime: 40,    // отзывчивость колеса
+
+            // --- Вращение карты ---
+            rotate: true,             // включаем вращение
+            rotateControl: {
+                closeOnZeroBearing: false
+            },
+            bearing: 0,               // начальный угол поворота
+            touchRotate: true,        // вращение двумя пальцами на тачскрине
+            shiftKeyRotate: true,     // вращение с зажатым Shift + перетаскивание
+            rotateWhileZooming: true  // плавное вращение при зуме
+        });
+
         // Слой карты - без надписи
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: ''
         }).addTo(map);
-        
-        // Без маркеров, без флагов - просто чистая карта
     </script>
 </body>
 </html>
